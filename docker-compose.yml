@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  cogtiler:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports: 
+      - 8091:80

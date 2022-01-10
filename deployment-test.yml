@@ -1,0 +1,102 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: skraafotodistribution-tile-api
+  annotations:
+    responsible-email: nicolai@septima.dk
+    responsible-owner: $CIRCLE_PROJECT_USERNAME
+    responsible-commiter: $CIRCLE_USERNAME
+    project-url: $CIRCLE_REPOSITORY_URL
+  labels:
+    k8s-app: skraafotodistribution-tile-api
+spec:
+  replicas: 1 # raise to scale horizontical (in which case this must be a stateless service)
+  selector:
+    matchLabels:
+      k8s-app: skraafotodistribution-tile-api
+  template:
+    metadata:
+      labels:
+        k8s-app: skraafotodistribution-tile-api
+        name: skraafotodistribution-tile-api
+    spec:
+      containers:
+        - image: 478520491926.dkr.ecr.eu-central-1.amazonaws.com/skraafotodistribution-tile-api
+          # NOTE: uncomment to provide environment variable(s) to container
+          #env:
+          #  - name:
+          #    value:
+          name: skraafotodistribution-tile-api
+          resources:
+            requests:
+              memory: "64Mi" # set to the least amount of RAM this pod needs
+              cpu: "0.01" # corresponds to requesting min 0.01 virtual cores, only raise if you know what you are doing
+            limits:
+              memory: "256Mi" # set to when this pod should be considering allocating too much eventually scheduled for killing
+              cpu: "1" # max use 1 virtual core, raise if need higher burst speeds
+          ports:
+            - name: http
+              containerPort: 80 # adjust if your container has another internal port
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: skraafotodistribution-tile-api
+  labels:
+    expose: "true"
+spec:
+  selector:
+    k8s-app: skraafotodistribution-tile-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80 # adjust if your container has another internal port
+      name: web
+  type: ClusterIP
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: skraafotodistribution-tile-api
+spec:
+  virtualhost:
+    fqdn: skraafotodistribution-tile-api.k8s-test-121.septima.dk
+    tls:
+      secretName: skraafotodistribution-tile-api-tls
+    # Below section can be enabled and tweaked for CORS
+    corsPolicy:
+      allowCredentials: true
+      allowOrigin:
+        - "*"
+      allowMethods:
+        - GET
+        #- POST
+        - OPTIONS
+      allowHeaders:
+        #- authorization
+        #- cache-control
+        - Content-Type
+      exposeHeaders:
+        - Content-Length
+        - Content-Range
+      maxAge: "10m"
+  routes:
+    - conditions:
+        - prefix: /
+      services:
+        - name: skraafotodistribution-tile-api
+          port: 80
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: skraafotodistribution-tile-api
+spec:
+  commonName: skraafotodistribution-tile-api.k8s-test-121.septima.dk
+  dnsNames:
+    - skraafotodistribution-tile-api.k8s-test-121.septima.dk
+  issuerRef:
+    # Change to letsencrypt-prod if real cert is needed
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  secretName: skraafotodistribution-tile-api-tls

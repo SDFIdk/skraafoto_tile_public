@@ -1,0 +1,40 @@
+@host=http://localhost:8000/cogtiler
+
+@api_token=xxx
+@cog_url=https://api.dataforsyningen.dk/skraafoto_server_test/2021_cog/2021_82_24_5_0024_00005660.jpg.cog.tif
+
+@query_params=url={{cog_url}}&token={{api_token}}
+
+
+### 
+# Returns file info
+GET {{host}}/info?{{query_params}} HTTP/1.1
+
+### 
+# Returns a single jpeg tile
+GET {{host}}/tiles/1/0/1.jpg?{{query_params}} HTTP/1.1
+
+### 
+# Returns single jpeg tile (default overflow handling)
+GET {{host}}/tiles/0/0/0.jpg?{{query_params}} HTTP/1.1
+
+### 
+# Returns single jpeg tile (showing overflow artifacts)
+GET {{host}}/tiles/0/0/0.jpg?overflow=pad&{{query_params}} HTTP/1.1
+
+### 
+# Returns jpeg tile with artifacts cropped (not 1024x1024)
+GET {{host}}/tiles/0/0/0.jpg?overflow=crop&{{query_params}} HTTP/1.1
+
+### 
+# Returns jpeg tile with artifacts masked (is 1024x1024)
+GET {{host}}/tiles/0/0/0.jpg?overflow=mask&{{query_params}} HTTP/1.1
+
+### 
+# Returns html with deepzoom viewer for the image
+GET {{host}}/viewer.html?{{query_params}} HTTP/1.1
+
+
+### 
+# Returns thumbnail
+GET {{host}}/thumbnail.jpg?{{query_params}} HTTP/1.1

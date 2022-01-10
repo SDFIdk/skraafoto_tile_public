@@ -1,0 +1,16 @@
+<html>
+
+<body>
+    <div id="openseadragon1" style="width: 1024px; height: 800px;"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/3.0.0/openseadragon.min.js"></script>
+    <script type="text/javascript">
+        var encoded_url = encodeURIComponent("https://api.dataforsyningen.dk/skraafoto_server_test/2021_cog/2021_82_24_5_0024_00005660.jpg.cog.tif?token=9e90ecd2082cbf6fd906b6fafa215b52");
+        var viewer = OpenSeadragon({
+            id: "openseadragon1",
+            prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/3.0.0/images/",
+            tileSources: "../cogtiler/deepzoom.dzi?url=" + encoded_url
+        });
+    </script>
+</body>
+
+</html>
