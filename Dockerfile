@@ -9,3 +9,5 @@ RUN apk add --no-cache --virtual .build-deps gcc g++ libc-dev make\
 ENV LIBTURBOJPEG=/usr/lib/libturbojpeg.so.0
 
 COPY ./src/cogtiler /app
+
+CMD ["python","-m","uvicorn","main:app","--host","0.0.0.0","--port","8000"]
