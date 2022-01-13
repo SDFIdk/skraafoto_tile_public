@@ -4,7 +4,7 @@ services:
   cogtiler:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_dev
       target: production
 
     ports:
