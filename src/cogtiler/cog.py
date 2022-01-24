@@ -17,7 +17,7 @@ class CogRequest(BaseModel):
     token: str = Depends(security.api_key.APIKeyQuery(name="token", auto_error=False))
 
     def get_cog_url(self) -> str:
-        return self.url + f"?token={self.token}"
+        return self.url
 
 
 # Inspired by https://github.com/tiangolo/fastapi/issues/236
