@@ -62,6 +62,7 @@ class COGTiff:
         self._offset = 0
         self._image_ifds = []
         self._mask_ifds = []
+        self._header_is_parsed = False
 
         # self.read_header()
 
@@ -210,7 +211,7 @@ class COGTiff:
 
     async def read_header(self):
         """Read and parse COG header."""
-        if self.header:
+        if self._header_is_parsed:
             return
         buff_size = int(os.environ.get("COG_INGESTED_BYTES_AT_OPEN", "16384"))
         self.header = await self.read(0, buff_size)
@@ -314,6 +315,9 @@ class COGTiff:
         if len(self._image_ifds) == 0 and len(self._mask_ifds) > 0:  # pragma: no cover
             self._image_ifds = self._mask_ifds
             self._mask_ifds = []
+
+        # Done parsing header. Dont spend time parsing it again.
+        self._header_is_parsed = True
 
     async def get_info(self, z=0):
         await self.read_header()

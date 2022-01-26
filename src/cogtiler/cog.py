@@ -24,7 +24,7 @@ class CogRequest(BaseModel):
     )
 
     def get_cog_url(self) -> str:
-        return self.url
+        return str(self.url)
 
     @validator("url")
     def url_in_whitelist(cls, value):
@@ -39,8 +39,7 @@ class CogRequest(BaseModel):
 
 # Inspired by https://github.com/tiangolo/fastapi/issues/236
 class HttpCogClient:
-    def __init__(self, urlvalidator=None) -> None:
-        # TODO: Configure whitelist
+    def __init__(self) -> None:
         pass
 
     def start(self):
@@ -53,19 +52,18 @@ class HttpCogClient:
     async def cog_from_query_param(
         self, cog_req: CogRequest = Depends(CogRequest)
     ) -> COGTiff:
-        # TODO: Validate URL against whitelist or something
-        return await self._get_http_cog(cog_req.get_cog_url(), self.http_session)
+        return await self._get_http_cog(cog_req.get_cog_url())
 
     async def get_tile_response(
         self, cog: COGTiff, z: int, x: int, y: int, overflow: Overflow = Overflow.Pad
     ) -> Response:
-        try:
-            mime_type, tilebytes = await cog.get_tile(x, y, z, overflow)
-            return Response(content=tilebytes, media_type="image/jpeg")
-        except TIFFError as te:
-            return Response(content=te.message, status_code=500)
+        mime_type, tilebytes = await cog.get_tile(x, y, z, overflow)
+        return Response(content=tilebytes, media_type="image/jpeg")
 
     @AsyncLRU(maxsize=1024)
-    async def _get_http_cog(self, url: str, session: aiohttp.ClientSession) -> COGTiff:
-        reader = HttpReader(url, session)
-        return COGTiff(reader.read)
+    async def _get_http_cog(self, url: str) -> COGTiff:
+        reader = HttpReader(url, self.http_session)
+        cog = COGTiff(reader.read)
+        # parse header here to know if it throws. If it does throw it will not be cached
+        await cog.read_header()
+        return cog

@@ -2,12 +2,14 @@ import math
 import time
 import sys
 
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI, Response, Request, HTTPException
 from fastapi.param_functions import Depends
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.exception_handlers import http_exception_handler
 
 from aiocogdumper.cog_tiles import COGTiff, Overflow
+from aiocogdumper.errors import HTTPError, TIFFError
 from settings import Settings
 
 from loguru import logger
@@ -17,22 +19,22 @@ from cog import (
     CogRequest,
 )
 
+settings = Settings()
 logger.remove()
 logger.add(
     sys.stdout,
-    colorize=True,
+    colorize=settings.debug,
     format="<green>{time:HH:mm:ss}</green> | {level} | <level>{message}</level>",
 )
-settings = Settings()
+
 app = FastAPI()
 
 # TODO: Add configurations
-cog_client = HttpCogClient(settings)
+cog_client = HttpCogClient()
 
 # Logging as middleware
 @app.middleware("http")
 async def log_middle(request: Request, call_next):
-    # logger.debug(f"{request.method} {request.url}")
     start = time.perf_counter()
     response = await call_next(request)
     end = time.perf_counter()
@@ -48,6 +50,26 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     await cog_client.stop()
+
+
+# Handle http exceptions from upstream server
+@app.exception_handler(HTTPError)
+async def upstream_http_exception_handler(request, exc: HTTPError):
+    logger.warning(f"Upstream HTTP error: {repr(exc)}")
+    # Convert to FastApi exception
+    exc = HTTPException(502, f"Upstream server returned: [{exc.status}] {exc.message}")
+    return await http_exception_handler(request, exc)
+
+
+# Handle tiff exceptions
+@app.exception_handler(TIFFError)
+async def upstream_http_exception_handler(request, exc: TIFFError):
+    logger.warning(
+        f"Tiff error when reading [{request.query_params['url']}]: {repr(exc)}"
+    )
+    # Convert to FastApi exception
+    exc = HTTPException(500, f"Error reading upstream tiff file: {exc.message}")
+    return await http_exception_handler(request, exc)
 
 
 app.mount("/demo", StaticFiles(directory="demo_client"), name="demo")
