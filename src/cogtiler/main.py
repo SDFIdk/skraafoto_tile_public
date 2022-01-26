@@ -1,14 +1,15 @@
-from fastapi.param_functions import Depends
-from aiocogdumper.errors import TIFFError
+import math
+import time
+import sys
+
 from fastapi import FastAPI, Response, Request
+from fastapi.param_functions import Depends
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from aiocogdumper.cog_tiles import COGTiff, Overflow
-import math
-import time
+from settings import Settings
 
-import sys
 from loguru import logger
 
 from cog import (
@@ -22,11 +23,11 @@ logger.add(
     colorize=True,
     format="<green>{time:HH:mm:ss}</green> | {level} | <level>{message}</level>",
 )
-
+settings = Settings()
 app = FastAPI()
 
 # TODO: Add configurations
-cog_client = HttpCogClient()
+cog_client = HttpCogClient(settings)
 
 # Logging as middleware
 @app.middleware("http")

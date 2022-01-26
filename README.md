@@ -8,8 +8,19 @@ When the image dimensions are not a multiple of the tile size the client can to 
 TODO: 
  - explain the three methods (image examples)
  - List endpoint types
- - Viewer
  - Describe how to use in setups where `token` is not required
+
+## Configuration
+Cogtiler may be restricted to only proxy COGs from a fixed set of domains. This is done with a whitelist matching on prefix. The whitelist is configured
+using the environment variable named `COGTILER_WHITELIST` and is an array of allowed URL prefixes encoded as a json array like:
+
+```
+COGTILER_WHITELIST=["https://api.dataforsyningen.dk/","https://septima.dk"]
+```
+
+Note: Depending on the context (where the env var is set) it may be necessary to escape the quotes.
+
+When cogtiler recieves a request to read data from a COG at a certain url, it checks if the url starts with one of the prefixes from the whitelist. Otherwise an error is returned to the client.
 
 ## Disclaimer
 `cogtiler` is built for and tested with COGs that are jpeg compressed using GDAL. It will definitely NOT work with anything else than jpeg compression. It is most likely possible to create jpeg compressed COGs that wont work with `cogtiler`.

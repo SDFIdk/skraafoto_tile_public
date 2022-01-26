@@ -1,23 +1,40 @@
+from typing import Optional
 import aiohttp
+from pydantic import BaseModel, HttpUrl, validator
 from pydantic.fields import Field
-from aiocogdumper.errors import TIFFError
-from fastapi import Response, Query
-from fastapi import security
+from fastapi import Response, Query, security
+from fastapi.exceptions import HTTPException
 from fastapi.params import Depends
 
+from aiocogdumper.errors import TIFFError
 from aiocogdumper.httpdumper import Reader as HttpReader
-from aiocogdumper.filedumper import Reader as FileReader
 from aiocogdumper.cog_tiles import COGTiff, Overflow
 from cache import AsyncLRU
-from pydantic import BaseModel
+
+
+from settings import get_settings
 
 
 class CogRequest(BaseModel):
-    url: str = Field(default=..., description="Url for cloud optimized geotiff")
-    token: str = Depends(security.api_key.APIKeyQuery(name="token", auto_error=False))
+    url: HttpUrl = Field(
+        default=Query(...), description="Url for cloud optimized geotiff"
+    )
+    token: Optional[str] = Depends(
+        security.api_key.APIKeyQuery(name="token", auto_error=False)
+    )
 
     def get_cog_url(self) -> str:
         return self.url
+
+    @validator("url")
+    def url_in_whitelist(cls, value):
+        settings = get_settings()
+        if not settings.whitelist:
+            return value
+        for whitelisted in settings.whitelist:
+            if value.startswith(whitelisted):
+                return value
+        raise HTTPException(403, "Specified URL is not allowed")
 
 
 # Inspired by https://github.com/tiangolo/fastapi/issues/236

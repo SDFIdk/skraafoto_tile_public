@@ -1,5 +1,7 @@
-aiohttp 
-aiofiles 
-async-cache 
-PyTurboJPEG 
-loguru
+aiohttp==3.8.1 
+aiofiles==0.8.0 
+async-cache==1.1.1 
+PyTurboJPEG==1.6.5 
+loguru==0.5.3
+fastapi==0.73.0
+uvicorn~=0.17.0
