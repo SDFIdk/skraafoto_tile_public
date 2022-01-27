@@ -19,18 +19,21 @@ from cog import (
     CogRequest,
 )
 
+# Setup of settings and log
 settings = Settings()
 logger.remove()
 logger.add(
     sys.stdout,
     colorize=settings.debug,
     format="<green>{time:HH:mm:ss}</green> | {level} | <level>{message}</level>",
+    level="DEBUG" if settings.debug else "INFO",
 )
+logger.info(f"Starting API using settings: {settings}")
 
+# Instantiate app
 app = FastAPI()
-
-# TODO: Add configurations
 cog_client = HttpCogClient()
+
 
 # Logging as middleware
 @app.middleware("http")
@@ -38,10 +41,13 @@ async def log_middle(request: Request, call_next):
     start = time.perf_counter()
     response = await call_next(request)
     end = time.perf_counter()
-    logger.debug(f"{request.method} {request.url} {(end - start) * 1000:0.1f} ms")
+    process_time = f"{(end - start) * 1000:0.1f} ms"
+    logger.debug("{} {} {}", request.method, request.url, process_time)
+    response.headers["X-Process-Time"] = process_time
     return response
 
 
+# Startup and shutdown events
 @app.on_event("startup")
 async def startup_event():
     cog_client.start()
