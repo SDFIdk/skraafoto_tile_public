@@ -109,7 +109,7 @@ async def get_cog(
 # image metadata
 
 
-@app.get("/cogtiler/info")
+@app.get("/info")
 async def get_info(cog: COGTiff = Depends(cog_client.cog_from_query_param)):
     return await cog.get_info(0)
 
@@ -119,7 +119,7 @@ async def get_info(cog: COGTiff = Depends(cog_client.cog_from_query_param)):
 
 
 @app.get(
-    "/cogtiler/thumbnail.jpg",
+    "/thumbnail.jpg",
     responses={200: {"content": {"image/jpeg": {}}}},
     response_class=Response,
 )
@@ -134,7 +134,7 @@ async def get_thumbnail(cog: COGTiff = Depends(cog_client.cog_from_query_param))
 ########################################################################################
 # xyz tiles endpoint
 @app.get(
-    "/cogtiler/tiles/{z}/{x}/{y}.jpg",
+    "/tiles/{z}/{x}/{y}.jpg",
     responses={200: {"content": {"image/jpeg": {}}}},
     response_class=Response,
 )
@@ -154,7 +154,7 @@ async def get_tile_from_xyz(
 ########################################################################################
 # deepzoom
 @app.get(
-    "/cogtiler/deepzoom.dzi",
+    "/deepzoom.dzi",
     responses={200: {"content": {"application/xml": {}}}},
     response_class=Response,
 )
@@ -168,7 +168,7 @@ async def get_deepzoom_xml(cog: COGTiff = Depends(cog_client.cog_from_query_para
 
 
 @app.get(
-    "/cogtiler/deepzoom_files/{z}/{tilename}",
+    "/deepzoom_files/{z}/{tilename}",
     responses={200: {"content": {"image/jpeg": {}}}},
     response_class=Response,
 )
@@ -192,10 +192,11 @@ async def get_deepzoom_tile(
 
 
 @app.get(
-    "/cogtiler/viewer.html",
+    "/viewer.html",
     response_class=HTMLResponse,
 )
 async def get_html_viewer(cog_req: CogRequest = Depends(CogRequest)):
+    token_param = f"&token={cog_req.token}" if cog_req.token else ""
     html = f"""
 <html>
 <head>
@@ -210,7 +211,7 @@ async def get_html_viewer(cog_req: CogRequest = Depends(CogRequest)):
         var viewer = OpenSeadragon({{
             id: "openseadragon1",
             prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/3.0.0/images/",
-            tileSources: "../cogtiler/deepzoom.dzi?url=" + encoded_url + "&token=" + "{cog_req.token}"
+            tileSources: "../deepzoom.dzi?url=" + encoded_url + "{token_param}"
         }});
     </script>
 </body>
