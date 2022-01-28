@@ -211,7 +211,7 @@ async def get_html_viewer(cog_req: CogRequest = Depends(CogRequest)):
         var viewer = OpenSeadragon({{
             id: "openseadragon1",
             prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/3.0.0/images/",
-            tileSources: "../deepzoom.dzi?url=" + encoded_url + "{token_param}"
+            tileSources: "./deepzoom.dzi?url=" + encoded_url + "{token_param}"
         }});
     </script>
 </body>

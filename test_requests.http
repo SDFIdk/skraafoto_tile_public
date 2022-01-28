@@ -1,4 +1,4 @@
-@host=http://localhost:8000/cogtiler
+@host=http://localhost:8000
 
 @api_token=xxx
 @cog_url=https://api.dataforsyningen.dk/skraafoto_server_test/2021_cog/2021_82_24_5_0024_00005660.jpg.cog.tif
