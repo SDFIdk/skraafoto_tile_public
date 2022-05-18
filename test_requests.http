@@ -1,7 +1,9 @@
 @host=http://localhost:8000
 
 @api_token=xxx
-@cog_url=https://api.dataforsyningen.dk/skraafoto_server_test/2021_cog/2021_82_24_5_0024_00005660.jpg.cog.tif
+@cog_url=https://api.dataforsyningen.dk/skraafoto_server_test/COG_oblique_2021/10km_614_59/1km_6145_592/2021_83_36_1_0020_00003045.tif
+
+@cog_url_token={{cog_url}}?token={{api_token}}
 
 @query_params=url={{cog_url}}&token={{api_token}}
 
@@ -38,3 +40,32 @@ GET {{host}}/viewer.html?{{query_params}} HTTP/1.1
 ### 
 # Returns thumbnail
 GET {{host}}/thumbnail.jpg?{{query_params}} HTTP/1.1
+
+####################################################
+### Header auth
+####################################################
+
+### 
+# Returns file info
+GET {{host}}/info?url={{cog_url}} HTTP/1.1
+token: {{api_token}}
+
+### 
+# Returns a single jpeg tile
+GET {{host}}/tiles/1/0/1.jpg?url={{cog_url}} HTTP/1.1
+token: {{api_token}}
+
+### 
+# Returns single jpeg tile (default overflow handling)
+GET {{host}}/tiles/0/0/0.jpg?url={{cog_url}} HTTP/1.1
+token: {{api_token}}
+
+### 
+# Returns html with deepzoom viewer for the image
+GET {{host}}/viewer.html?url={{cog_url}} HTTP/1.1
+token: {{api_token}}
+
+### 
+# Returns thumbnail
+GET {{host}}/thumbnail.jpg?url={{cog_url}} HTTP/1.1
+token: {{api_token}}

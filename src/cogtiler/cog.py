@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 import aiohttp
 from pydantic import BaseModel, HttpUrl, validator
 from pydantic.fields import Field
@@ -19,9 +19,15 @@ class CogRequest(BaseModel):
     url: HttpUrl = Field(
         default=Query(...), description="Url for cloud optimized geotiff"
     )
-    token: Optional[str] = Depends(
+    query_token: Optional[str] = Depends(
         security.api_key.APIKeyQuery(name="token", auto_error=False)
     )
+    header_token: Optional[str] = Depends(
+        security.api_key.APIKeyHeader(name="token", auto_error=False)
+    )
+
+    def get_token(self) -> str:
+        return self.query_token or self.header_token or ""
 
     def get_cog_url(self) -> str:
         return str(self.url)
@@ -52,7 +58,9 @@ class HttpCogClient:
     async def cog_from_query_param(
         self, cog_req: CogRequest = Depends(CogRequest)
     ) -> COGTiff:
-        return await self._get_http_cog(cog_req.get_cog_url())
+        token = cog_req.get_token()
+        headers = {"token": token} if token else {}
+        return await self._get_http_cog(cog_req.get_cog_url(), headers)
 
     async def get_tile_response(
         self, cog: COGTiff, z: int, x: int, y: int, overflow: Overflow = Overflow.Pad
@@ -61,8 +69,10 @@ class HttpCogClient:
         return Response(content=tilebytes, media_type="image/jpeg")
 
     @AsyncLRU(maxsize=1024)
-    async def _get_http_cog(self, url: str) -> COGTiff:
-        reader = HttpReader(url, self.http_session)
+    async def _get_http_cog(
+        self, url: str, headers: Optional[Dict[str, str]] = None
+    ) -> COGTiff:
+        reader = HttpReader(url, self.http_session, headers)
         cog = COGTiff(reader.read)
         # parse header here to know if it throws. If it does throw it will not be cached
         await cog.read_header()

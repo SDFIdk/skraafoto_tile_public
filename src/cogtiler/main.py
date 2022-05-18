@@ -196,7 +196,8 @@ async def get_deepzoom_tile(
     response_class=HTMLResponse,
 )
 async def get_html_viewer(cog_req: CogRequest = Depends(CogRequest)):
-    token_param = f"&token={cog_req.token}" if cog_req.token else ""
+    token = cog_req.get_token()
+    token_param = f"&token={token}" if token else ""
     html = f"""
 <html>
 <head>

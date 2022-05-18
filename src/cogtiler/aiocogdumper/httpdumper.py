@@ -1,5 +1,5 @@
 """A utility to dump tiles directly from a tiff file on a http server."""
-
+from typing import Dict, Optional
 import logging
 import aiohttp
 
@@ -16,16 +16,19 @@ class Reader(AbstractReader):
         self,
         url,
         httpsession: aiohttp.ClientSession,
+        headers: Optional[Dict[str, str]] = {},
     ):
 
         self.url = url
         self.session = httpsession
+        self.headers = headers or {}
 
     async def read(self, offset, length):
         start = offset
         stop = offset + length - 1
-        headers = {"Range": f"bytes={start}-{stop}"}
-        r = await self.session.get(self.url, headers=headers)
+        request_headers = dict(self.headers)
+        request_headers["Range"] = f"bytes={start}-{stop}"
+        r = await self.session.get(self.url, headers=request_headers)
         if r.status != 206:
             raise HTTPError(await r.text(), r.status)
         else:
