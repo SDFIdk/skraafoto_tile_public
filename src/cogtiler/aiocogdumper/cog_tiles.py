@@ -1,5 +1,6 @@
 """Function for extracting tiff tiles."""
 
+from dataclasses import dataclass
 from enum import Enum
 import os
 
@@ -27,6 +28,18 @@ class Overflow(Enum):
     Pad = "pad"
     Crop = "crop"
     Mask = "mask"
+
+
+@dataclass
+class TiffInfo:
+    width: int
+    height: int
+    tile_width: int
+    tile_height: int
+    tile_cols: int
+    tile_rows: int
+    overviews: int
+    compression: str
 
 
 class COGTiff:
@@ -322,17 +335,17 @@ class COGTiff:
     async def get_info(self, z=0):
         await self.read_header()
         image_ifd = self._image_ifds[z]
-        return {
-            "width": image_ifd["image_width"],
-            "height": image_ifd["image_height"],
-            "compression": image_ifd["compression"],
-            "tile_width": image_ifd["tile_width"],
-            "tile_height": image_ifd["tile_height"],
-            "tile_cols": image_ifd["nx_tiles"],
-            "tile_rows": image_ifd["ny_tiles"],
+        return TiffInfo(
+            width=image_ifd["image_width"],
+            height=image_ifd["image_height"],
+            tile_width=image_ifd["tile_width"],
+            tile_height=image_ifd["tile_height"],
+            tile_cols=image_ifd["nx_tiles"],
+            tile_rows=image_ifd["ny_tiles"],
+            compression=image_ifd["compression"],
             # Should this be a list of overviews?
-            "overviews": len(self._image_ifds) - z - 1,
-        }
+            overviews=len(self._image_ifds) - z - 1,
+        )
 
     async def get_tile(self, x: int, y: int, z: int, overflow: Overflow = Overflow.Pad):
         """Read tile data."""

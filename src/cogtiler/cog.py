@@ -17,7 +17,10 @@ from settings import get_settings
 
 class CogRequest(BaseModel):
     url: HttpUrl = Field(
-        default=Query(...), description="Url for cloud optimized geotiff"
+        default=Query(
+            ...,
+            description="Url for Cloud Optimized GeoTIFF (COG). Must be JPEG compressed.",
+        )
     )
     query_token: Optional[str] = Depends(
         security.api_key.APIKeyQuery(name="token", auto_error=False)

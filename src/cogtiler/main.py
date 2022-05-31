@@ -2,7 +2,7 @@ import math
 import time
 import sys
 
-from fastapi import FastAPI, Response, Request, HTTPException
+from fastapi import FastAPI, Query, Path, Response, Request, HTTPException
 from fastapi.param_functions import Depends
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +10,7 @@ from fastapi.exception_handlers import http_exception_handler
 
 from aiocogdumper.cog_tiles import COGTiff, Overflow
 from aiocogdumper.errors import HTTPError, TIFFError
+from aiocogdumper.cog_tiles import TiffInfo
 from settings import Settings
 
 from loguru import logger
@@ -109,8 +110,18 @@ async def get_cog(
 # image metadata
 
 
-@app.get("/info")
+@app.get("/info", response_model=TiffInfo)
 async def get_info(cog: COGTiff = Depends(cog_client.cog_from_query_param)):
+    """Gets info about the internal layout of the specified Cloud Optimized GeoTIFF.
+
+    - `width` full resolution tiff width in pixels
+    - `height` full resolution tiff height in pixels
+    - `tile_width` width of tiff tiles in pixels
+    - `tile_height` height of tiff tiles in pixels
+    - `tile_cols` number of tile columns in full resolution
+    - `tile_rows` number of tile rows in full resolution
+    - `overviews` number of reduced resolution overviews (excluding full resolution)
+    """
     return await cog.get_info(0)
 
 
@@ -124,8 +135,13 @@ async def get_info(cog: COGTiff = Depends(cog_client.cog_from_query_param)):
     response_class=Response,
 )
 async def get_thumbnail(cog: COGTiff = Depends(cog_client.cog_from_query_param)):
+    """Gets a thumbnail from the specified JPEG compressed Cloud Optimized GeoTIFF.
+
+    This is equivalent to getting the top most tile from the overviews `(z=0, x=0, y=0)` using `overflow = crop`.
+    The size of the returned thumbnail is generally undefined, but it cannot be larger than
+    `tile_width` and `tile_height`."""
     info = await cog.get_info(0)
-    max_zoom = info["overviews"]
+    max_zoom = info.overviews
     return await cog_client.get_tile_response(
         cog, max_zoom, 0, 0, overflow=Overflow.Crop
     )
@@ -133,20 +149,31 @@ async def get_thumbnail(cog: COGTiff = Depends(cog_client.cog_from_query_param))
 
 ########################################################################################
 # xyz tiles endpoint
+overflow_description = """What should happen with edge tiles when the image dimensions are not a multiple of the tile size.
+
+`pad` pads the image with random data. This option requires the least amount of resources from the server and is therefore the fastest. All tiles will have the same dimensions.
+
+`crop` crops the tiles that are not entirely filled by source image data. Edge tiles will have different dimensions from tiles completely covered by the source image.
+
+`mask` masks the part of the tile which is outside the source image with black pixels. All tiles will have the same dimensions.
+"""
+
+
 @app.get(
     "/tiles/{z}/{x}/{y}.jpg",
     responses={200: {"content": {"image/jpeg": {}}}},
     response_class=Response,
 )
 async def get_tile_from_xyz(
-    z: int,
-    x: int,
-    y: int,
-    overflow: Overflow = Overflow.Mask,
+    z: int = Path(..., description="Overview level (top most is `z=0`)"),
+    x: int = Path(..., description="Tile column (from left side of image)"),
+    y: int = Path(..., description="Tile row (from top of image)"),
+    overflow: Overflow = Query(Overflow.Mask, description=overflow_description),
     cog: COGTiff = Depends(cog_client.cog_from_query_param),
 ):
+    """Gets a single tile from the specified JPEG compressed Cloud Optimized GeoTIFF"""
     info = await cog.get_info(0)
-    zoomlevels = info["overviews"] + 1
+    zoomlevels = info.overviews + 1
     cog_z = zoomlevels - z - 1
     return await cog_client.get_tile_response(cog, cog_z, x, y, overflow)
 
@@ -159,10 +186,11 @@ async def get_tile_from_xyz(
     response_class=Response,
 )
 async def get_deepzoom_xml(cog: COGTiff = Depends(cog_client.cog_from_query_param)):
+    """Deep Zoom endpoint"""
     info = await cog.get_info(0)
     xml = f"""<?xml version="1.0" encoding="utf-8"?>
-                    <Image TileSize="{info["tile_width"]}" Rotation="0" Overlap="0" Format="jpg" ServerFormat="Default" xmlns="http://schemas.microsoft.com/deepzoom/2009">
-                        <Size Width="{info["width"]}" Height="{info["height"]}"  />
+                    <Image TileSize="{info.tile_width}" Rotation="0" Overlap="0" Format="jpg" ServerFormat="Default" xmlns="http://schemas.microsoft.com/deepzoom/2009">
+                        <Size Width="{info.width}" Height="{info.height}"  />
                     </Image>"""
     return Response(content=xml, media_type="application/xml")
 
@@ -175,12 +203,13 @@ async def get_deepzoom_xml(cog: COGTiff = Depends(cog_client.cog_from_query_para
 async def get_deepzoom_tile(
     z: int, tilename: str, cog: COGTiff = Depends(cog_client.cog_from_query_param)
 ):
+    """Deep Zoom image tiles"""
     # TODO: regex på tile i FastAPI. TROR det er ("x_y.jpg")
     x, y = map(int, tilename[:-4].split("_"))
     # DeepZoom uses inverted z
     info = await cog.get_info(0)
     # https://github.com/openzoom/deepzoom.py/blob/master/deepzoom/__init__.py#L121
-    max_dimension = max(info["width"], info["height"])
+    max_dimension = max(info.width, info.height)
     num_levels = int(math.ceil(math.log(max_dimension, 2))) + 1
     cog_z = num_levels - z - 1
     # DeepZoom apparantly crops overflow away from tiles
@@ -196,6 +225,9 @@ async def get_deepzoom_tile(
     response_class=HTMLResponse,
 )
 async def get_html_viewer(cog_req: CogRequest = Depends(CogRequest)):
+    """Interactive image viewer
+
+    **Note**: Exposes token in html source"""
     token = cog_req.get_token()
     token_param = f"&token={token}" if token else ""
     html = f"""
