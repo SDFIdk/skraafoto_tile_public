@@ -3,12 +3,13 @@
 
 For tiles completely filled with image data `cogtiler` doesn't even decompress the jpeg but passes the fetched bytes untouched on to the client.
 
-When the image dimensions are not a multiple of the tile size the client can to decide what should happen with edge tiles. `cogtiler` has three ways of handling these "out of bounds" areas: `pad`, `crop` or `mask`.
+When the image dimensions are not a multiple of the tile size the client can decide what should happen with edge tiles. `cogtiler` has three ways of handling these "out of bounds" areas: `pad`, `crop` or `mask`.
 
-TODO: 
- - explain the three methods (image examples)
- - List endpoint types
- - Describe how to use in setups where `token` is not required
+`pad` pads the image with random data. This option requires the least amount of resources from the server and is therefore the fastest. All tiles will have the same dimensions. ![Padded image](./docs/media/image_pad.jpeg)
+
+`crop` crops the tiles that are not entirely filled by source image data. Edge tiles will have different dimensions from tiles completely covered by the source image. ![Cropped image](./docs/media/image_crop.jpeg)
+
+`mask` masks the part of the tile which is outside the source image with black pixels. All tiles will have the same dimensions. ![Masked image](./docs/media/image_mask.jpeg)
 
 ## Configuration
 Cogtiler may be restricted to only proxy COGs from a fixed set of domains. This is done with a whitelist matching on prefix. The whitelist is configured
