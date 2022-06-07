@@ -30,7 +30,7 @@ When `cogtiler` has to fetch a tile from a COG it first fetches the header (blue
 
 As these bytes are already jpeg compressed, they can be returned as is to the client making this operation extremely fast using very few resources. 
 
-The exception to this rule is when requesting edge tiles where the image dimensions are not a multiple of the tile size. Here `cogtiler` allows the client to choose what happens with the pixels which are not part of the source image (as described above). In this case some image manipulation may be necessary for some tiles. For these tiles `cogtiler` utilizes the (libjpeg-turbo)[https://www.libjpeg-turbo.org/] library which should be as resource effective as possible.
+The exception to this rule is when requesting edge tiles where the image dimensions are not a multiple of the tile size. Here `cogtiler` allows the client to choose what happens with the pixels which are not part of the source image (as described above). In this case some image manipulation may be necessary for some tiles. For these tiles `cogtiler` utilizes the [libjpeg-turbo](https://www.libjpeg-turbo.org/) library which should be as resource effective as possible.
 
 ### Caching
 Usually a client reading tiles from a COG will read a numerous tiles at the same time. Therefore `cogtiler` caches the latests 1024 headers in a LRU cache (see [code](https://github.com/SDFIdk/skraafoto_tile_public/blob/cc2758d4ac540a551b4966fe4018241c58036bbd/src/cogtiler/cog.py#L74)).
