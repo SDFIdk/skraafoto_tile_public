@@ -17,6 +17,10 @@ When the image dimensions are not a multiple of the tile size the client can dec
 
 ![Masked image](./docs/media/image_mask.jpeg)
 
+## Acknowledgments
+
+The part of cogtiler (`aiocogdumper`) which does the actual TIFF reading is heavily based on https://github.com/mapbox/COGDumper. Thank you Mapbox.
+
 ## Configuration
 Cogtiler may be restricted to only proxy COGs from a fixed set of domains. This is done with a whitelist matching on prefix. The whitelist is configured
 using the environment variable named `COGTILER_WHITELIST` and is an array of allowed URL prefixes encoded as a json array like:
