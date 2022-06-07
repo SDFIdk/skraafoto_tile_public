@@ -17,12 +17,32 @@ When the image dimensions are not a multiple of the tile size the client can dec
 
 ![Masked image](./docs/media/image_mask.jpeg)
 
+## Technical background
+For background info on how a Cloud Optimized GeoTIFF works please see https://www.cogeo.org/in-depth.html.
+
+At the beginning of the Cloud Optimized GeoTIFF it has a header which defines the internal organization of the file. ![COG structure](./docs/media/COG-structure.svg) For each resolution (overviews and full) it defines tile dimensions, compression scheme, number of overviews and other things (green). Then for each resolution it has a list of offsets and lengths to each individual tile data chunk (yellow). And at last is has the actual compressed image data (red).
+
+Using http range requests it is possbile to read random parts of the COG.
+
+When `cogtiler` has to fetch a tile from a COG it first fetches the header (blue, green and yellow) and parses it. Now it knows the structure of the TIFF and using this information makes it possible to fetch the exact byte range which holds the requested tile.
+
+![Sequence](./docs/media/sequence-diagram.svg)
+
+As these bytes are already jpeg compressed, they can be returned as is to the client making this operation extremely fast using very few resources. 
+
+The exception to this rule is when requesting edge tiles where the image dimensions are not a multiple of the tile size. Here `cogtiler` allows the client to choose what happens with the pixels which are not part of the source image (as described above). In this case some image manipulation may be necessary for some tiles. For these tiles `cogtiler` utilizes the (libjpeg-turbo)[https://www.libjpeg-turbo.org/] library which should be as resource effective as possible.
+
+### Caching
+Usually a client reading tiles from a COG will read a numerous tiles at the same time. Therefore `cogtiler` caches the latests 1024 headers in a LRU cache (see [code](https://github.com/SDFIdk/skraafoto_tile_public/blob/cc2758d4ac540a551b4966fe4018241c58036bbd/src/cogtiler/cog.py#L74)).
+
 ## Acknowledgments
 
 The part of cogtiler (`aiocogdumper`) which does the actual TIFF reading is heavily based on https://github.com/mapbox/COGDumper. Thank you Mapbox.
 
 ## Configuration
-Cogtiler may be restricted to only proxy COGs from a fixed set of domains. This is done with a whitelist matching on prefix. The whitelist is configured
+
+### Whitelist
+`cogtiler` may be restricted to only proxy COGs from a fixed set of domains. This is done with a whitelist matching on prefix. The whitelist is configured
 using the environment variable named `COGTILER_WHITELIST` and is an array of allowed URL prefixes encoded as a json array like:
 
 ```
@@ -31,7 +51,12 @@ COGTILER_WHITELIST=["https://api.dataforsyningen.dk/","https://septima.dk"]
 
 Note: Depending on the context (where the env var is set) it may be necessary to escape the quotes.
 
-When cogtiler recieves a request to read data from a COG at a certain url, it checks if the url starts with one of the prefixes from the whitelist. Otherwise an error is returned to the client.
+When `cogtiler` recieves a request to read data from a COG at a certain url, it checks if the url starts with one of the prefixes from the whitelist. Otherwise an error is returned to the client.
+
+### Header bytes
+`cogtiler` fetches a predefined number of bytes from the beginning af the file, if the header is bigger than this then more roundtrips are made. 
+
+The number of bytes initially fetched are `16384` by default, but this can be overridden by using the environment variable `COG_INGESTED_BYTES_AT_OPEN` (see [code](https://github.com/Dataforsyningen/skraafoto_tile_public/blob/cc2758d4ac540a551b4966fe4018241c58036bbd/src/cogtiler/aiocogdumper/cog_tiles.py#L229)).
 
 ## Disclaimer
 `cogtiler` is built for and tested with COGs that are jpeg compressed using GDAL. It will definitely NOT work with anything else than jpeg compression. It is most likely possible to create jpeg compressed COGs that wont work with `cogtiler`.
