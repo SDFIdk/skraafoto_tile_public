@@ -1,4 +1,4 @@
-# cogtiler ⚙️🖽 
+# cogtiler 🍸
 `cogtiler` acts as a proxying tile server whixh exposes tiles from jpeg compressed Cloud Optimized GeoTIFFs using as few server resources as possible.
 
 For tiles completely filled with image data `cogtiler` doesn't even decompress the jpeg but passes the fetched bytes untouched on to the client.
