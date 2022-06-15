@@ -32,6 +32,6 @@ class Reader(AbstractReader):
         if r.status == 200:
             raise HTTPRangeNotSupportedError()
         if r.status != 206:
-            raise HTTPError(await r.text(), r.status)
+            raise HTTPError(await r.content.read(512), r.status)
         else:
             return await r.read()
