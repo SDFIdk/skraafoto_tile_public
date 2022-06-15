@@ -2,21 +2,18 @@ import math
 import time
 import sys
 
-from fastapi import FastAPI, Query, Path, Response, Request, HTTPException
+from fastapi import FastAPI, Query, Path, Response, Request
 from fastapi.param_functions import Depends
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.exception_handlers import http_exception_handler
-
-from asyncio.exceptions import TimeoutError
 
 from aiocogdumper.cog_tiles import COGTiff, Overflow
-from aiocogdumper.errors import HTTPError, TIFFError, HTTPRangeNotSupportedError
 from aiocogdumper.cog_tiles import TiffInfo
 from settings import Settings
 
 from loguru import logger
 
+from exception_handlers import all_exception_handlers
 from cog import (
     HttpCogClient,
     CogRequest,
@@ -34,7 +31,7 @@ logger.add(
 logger.info(f"Starting API using settings: {settings}")
 
 # Instantiate app
-app = FastAPI()
+app = FastAPI(exception_handlers=all_exception_handlers)
 cog_client = HttpCogClient(timeout=settings.request_timeout)
 
 
@@ -59,46 +56,6 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     await cog_client.stop()
-
-
-# Handle http exceptions from upstream server
-@app.exception_handler(HTTPError)
-async def upstream_http_exception_handler(request, exc: HTTPError):
-    logger.warning(f"Upstream HTTP error [{request.query_params['url']}]: {repr(exc)}")
-    # Convert to FastApi exception
-    exc = HTTPException(502, f"Upstream server returned: [{exc.status}] {exc.message}")
-    return await http_exception_handler(request, exc)
-
-
-# Handle range request not supported exceptions
-@app.exception_handler(HTTPRangeNotSupportedError)
-async def upstream_range_not_supported_exception_handler(request, exc: HTTPError):
-    logger.warning(
-        f"Upstream server does not support range requests: [{request.query_params['url']}]"
-    )
-    # Convert to FastApi exception
-    exc = HTTPException(502, f"Upstream server does not support http range requests")
-    return await http_exception_handler(request, exc)
-
-
-# Handle tiff exceptions
-@app.exception_handler(TIFFError)
-async def upstream_tiff_exception_handler(request, exc: TIFFError):
-    logger.warning(
-        f"Tiff error when reading [{request.query_params['url']}]: {repr(exc)}"
-    )
-    # Convert to FastApi exception
-    exc = HTTPException(500, f"Error reading upstream tiff file: {exc.message}")
-    return await http_exception_handler(request, exc)
-
-
-# Handle http timeout exceptions
-@app.exception_handler(TimeoutError)
-async def upstream_timeout_exception_handler(request, exc: TIFFError):
-    logger.warning(f"Timeout when reading [{request.query_params['url']}]: {repr(exc)}")
-    # Convert to FastApi exception
-    exc = HTTPException(504, f"Timeout getting upstream tiff file data")
-    return await http_exception_handler(request, exc)
 
 
 app.mount("/demo", StaticFiles(directory="demo_client"), name="demo")
