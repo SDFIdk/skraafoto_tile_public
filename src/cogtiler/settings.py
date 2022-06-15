@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Set
+from typing import Set, Optional
 from pydantic import BaseSettings, HttpUrl
 
 
@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     whitelist: Set[HttpUrl] = set()
     debug: bool = False
     request_timeout: float = 10
+    cache_max_age: Optional[int] = 60 * 60 * 24
 
     class Config:
         env_prefix = "cogtiler_"

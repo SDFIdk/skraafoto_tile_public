@@ -1,7 +1,7 @@
 import math
 import sys
 
-from fastapi import FastAPI, Query, Path, Response, Request
+from fastapi import FastAPI, Query, Path, Response
 from fastapi.param_functions import Depends
 from fastapi.responses import HTMLResponse
 
@@ -12,7 +12,7 @@ from settings import Settings
 from loguru import logger
 
 from exception_handlers import all_exception_handlers
-from middlewares import ProcessTimeMiddleware
+from middlewares import ProcessTimeMiddleware, CacheControlMiddleware
 from cog import (
     HttpCogClient,
     CogRequest,
@@ -31,8 +31,14 @@ logger.info(f"Starting API using settings: {settings}")
 
 # Instantiate app
 app = FastAPI(exception_handlers=all_exception_handlers)
+# Add x-process-time headers to reponses
 app.add_middleware(ProcessTimeMiddleware)
+# Add cache-control headers to reponses
+app.add_middleware(
+    CacheControlMiddleware, storage_directive="private", max_age=settings.cache_max_age
+)
 
+# COG client
 cog_client = HttpCogClient(timeout=settings.request_timeout)
 
 

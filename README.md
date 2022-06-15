@@ -56,6 +56,9 @@ When `cogtiler` recieves a request to read data from a COG at a certain url, it 
 ### Request timeout
 Environment variable `COGTILER_REQUEST_TIMEOUT` sets the timeout in seconds for http requests against the upstream server hosting the COG.
 
+### Cache control
+Environment variable `COGTILER_CACHE_MAX_AGE` sets the number of seconds a browser is allowed to cache responses from this API.
+
 ### Header bytes
 `cogtiler` fetches a predefined number of bytes from the beginning af the file, if the header is bigger than this then more roundtrips are made. 
 
