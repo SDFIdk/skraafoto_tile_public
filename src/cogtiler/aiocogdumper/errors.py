@@ -11,6 +11,12 @@ class HTTPError(Exception):
         self.status = status
 
 
+class HTTPRangeNotSupportedError(Exception):
+    """Represents an error indicating missing upstram support for http range requests"""
+
+    exit_code = 1
+
+
 class TIFFError(Exception):
     exit_code = 1
 

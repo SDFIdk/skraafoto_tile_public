@@ -11,7 +11,7 @@ from fastapi.exception_handlers import http_exception_handler
 from asyncio.exceptions import TimeoutError
 
 from aiocogdumper.cog_tiles import COGTiff, Overflow
-from aiocogdumper.errors import HTTPError, TIFFError
+from aiocogdumper.errors import HTTPError, TIFFError, HTTPRangeNotSupportedError
 from aiocogdumper.cog_tiles import TiffInfo
 from settings import Settings
 
@@ -64,9 +64,20 @@ async def shutdown_event():
 # Handle http exceptions from upstream server
 @app.exception_handler(HTTPError)
 async def upstream_http_exception_handler(request, exc: HTTPError):
-    logger.warning(f"Upstream HTTP error: {repr(exc)}")
+    logger.warning(f"Upstream HTTP error [{request.query_params['url']}]: {repr(exc)}")
     # Convert to FastApi exception
     exc = HTTPException(502, f"Upstream server returned: [{exc.status}] {exc.message}")
+    return await http_exception_handler(request, exc)
+
+
+# Handle range request not supported exceptions
+@app.exception_handler(HTTPRangeNotSupportedError)
+async def upstream_range_not_supported_exception_handler(request, exc: HTTPError):
+    logger.warning(
+        f"Upstream server does not support range requests: [{request.query_params['url']}]"
+    )
+    # Convert to FastApi exception
+    exc = HTTPException(502, f"Upstream server does not support http range requests")
     return await http_exception_handler(request, exc)
 
 

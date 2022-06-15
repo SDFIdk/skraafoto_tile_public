@@ -3,7 +3,7 @@ from typing import Dict, Optional
 import logging
 import aiohttp
 
-from aiocogdumper.errors import HTTPError
+from aiocogdumper.errors import HTTPError, HTTPRangeNotSupportedError
 from aiocogdumper.cog_tiles import AbstractReader
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,8 @@ class Reader(AbstractReader):
         request_headers = dict(self.headers)
         request_headers["Range"] = f"bytes={start}-{stop}"
         r = await self.session.get(self.url, headers=request_headers)
+        if r.status == 200:
+            raise HTTPRangeNotSupportedError()
         if r.status != 206:
             raise HTTPError(await r.text(), r.status)
         else:
