@@ -1,11 +1,9 @@
 import math
-import time
 import sys
 
 from fastapi import FastAPI, Query, Path, Response, Request
 from fastapi.param_functions import Depends
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 
 from aiocogdumper.cog_tiles import COGTiff, Overflow
 from aiocogdumper.cog_tiles import TiffInfo
@@ -14,6 +12,7 @@ from settings import Settings
 from loguru import logger
 
 from exception_handlers import all_exception_handlers
+from middlewares import ProcessTimeMiddleware
 from cog import (
     HttpCogClient,
     CogRequest,
@@ -32,19 +31,9 @@ logger.info(f"Starting API using settings: {settings}")
 
 # Instantiate app
 app = FastAPI(exception_handlers=all_exception_handlers)
+app.add_middleware(ProcessTimeMiddleware)
+
 cog_client = HttpCogClient(timeout=settings.request_timeout)
-
-
-# Logging as middleware
-@app.middleware("http")
-async def log_middle(request: Request, call_next):
-    start = time.perf_counter()
-    response = await call_next(request)
-    end = time.perf_counter()
-    process_time = f"{(end - start) * 1000:0.1f} ms"
-    logger.debug("{} {} {}", request.method, request.url, process_time)
-    response.headers["X-Process-Time"] = process_time
-    return response
 
 
 # Startup and shutdown events
