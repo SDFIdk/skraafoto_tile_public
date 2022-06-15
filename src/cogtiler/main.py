@@ -8,6 +8,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.exception_handlers import http_exception_handler
 
+from asyncio.exceptions import TimeoutError
+
 from aiocogdumper.cog_tiles import COGTiff, Overflow
 from aiocogdumper.errors import HTTPError, TIFFError
 from aiocogdumper.cog_tiles import TiffInfo
@@ -33,7 +35,7 @@ logger.info(f"Starting API using settings: {settings}")
 
 # Instantiate app
 app = FastAPI()
-cog_client = HttpCogClient()
+cog_client = HttpCogClient(timeout=settings.request_timeout)
 
 
 # Logging as middleware
@@ -70,12 +72,21 @@ async def upstream_http_exception_handler(request, exc: HTTPError):
 
 # Handle tiff exceptions
 @app.exception_handler(TIFFError)
-async def upstream_http_exception_handler(request, exc: TIFFError):
+async def upstream_tiff_exception_handler(request, exc: TIFFError):
     logger.warning(
         f"Tiff error when reading [{request.query_params['url']}]: {repr(exc)}"
     )
     # Convert to FastApi exception
     exc = HTTPException(500, f"Error reading upstream tiff file: {exc.message}")
+    return await http_exception_handler(request, exc)
+
+
+# Handle http timeout exceptions
+@app.exception_handler(TimeoutError)
+async def upstream_timeout_exception_handler(request, exc: TIFFError):
+    logger.warning(f"Timeout when reading [{request.query_params['url']}]: {repr(exc)}")
+    # Convert to FastApi exception
+    exc = HTTPException(504, f"Timeout getting upstream tiff file data")
     return await http_exception_handler(request, exc)
 
 

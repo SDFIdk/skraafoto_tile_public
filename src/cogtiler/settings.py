@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     whitelist: Set[HttpUrl] = set()
     debug: bool = False
+    request_timeout: float = 10
 
     class Config:
         env_prefix = "cogtiler_"

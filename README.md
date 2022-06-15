@@ -53,6 +53,9 @@ Note: Depending on the context (where the env var is set) it may be necessary to
 
 When `cogtiler` recieves a request to read data from a COG at a certain url, it checks if the url starts with one of the prefixes from the whitelist. Otherwise an error is returned to the client.
 
+### Request timeout
+Environment variable `COGTILER_REQUEST_TIMEOUT` sets the timeout in seconds for http requests against the upstream server hosting the COG.
+
 ### Header bytes
 `cogtiler` fetches a predefined number of bytes from the beginning af the file, if the header is bigger than this then more roundtrips are made. 
 

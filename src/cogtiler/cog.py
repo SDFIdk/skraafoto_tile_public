@@ -48,11 +48,21 @@ class CogRequest(BaseModel):
 
 # Inspired by https://github.com/tiangolo/fastapi/issues/236
 class HttpCogClient:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, timeout: float = 10.0) -> None:
+        """_summary_
+
+        Parameters
+        ----------
+        timeout : float, optional
+            Timeout in seconds for each http request for COG data, by default 10.0
+        """
+        self.http_session = None
+        self.timeout_s = float(timeout)
 
     def start(self):
-        self.http_session: aiohttp.ClientSession = aiohttp.ClientSession()
+        self.http_session: aiohttp.ClientSession = aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=self.timeout_s)
+        )
 
     async def stop(self):
         await self.http_session.close()
