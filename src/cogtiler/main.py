@@ -58,8 +58,6 @@ async def shutdown_event():
     await cog_client.stop()
 
 
-app.mount("/demo", StaticFiles(directory="demo_client"), name="demo")
-
 ########################################################################################
 # cog endpoint generally follows this form:
 
