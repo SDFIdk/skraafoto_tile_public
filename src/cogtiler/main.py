@@ -1,7 +1,8 @@
 import math
 import sys
 
-from fastapi import FastAPI, Query, Path, Response
+from fastapi import FastAPI, Path, Query, Response
+from fastapi.openapi.utils import get_openapi
 from fastapi.param_functions import Depends
 from fastapi.responses import HTMLResponse
 
@@ -31,6 +32,22 @@ logger.info(f"Starting API using settings: {settings}")
 
 # Instantiate app
 app = FastAPI(exception_handlers=all_exception_handlers)
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Skråfoto Cogtiler",
+        version="1.0",
+        description="Cogtiler agerer som en proxy tile server som udstiller tiles fra jpeg komprimeret Cloud Optimized GeoTIFF",
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+    
+
 # Add x-process-time headers to reponses
 app.add_middleware(ProcessTimeMiddleware)
 # Add cache-control headers to reponses
