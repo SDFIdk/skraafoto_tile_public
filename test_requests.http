@@ -1,7 +1,7 @@
 @host=http://localhost:8000
 
 @api_token=xxx
-@cog_url=https://test15.dataforsyningen.dk/skraafoto_server_test/COG_oblique_2021/10km_614_59/1km_6145_592/2021_83_36_1_0020_00003045.tif
+@cog_url=https://test15.dataforsyningen.dk/skraafoto_server/COG_oblique_2021/10km_614_59/1km_6145_592/2021_83_36_1_0020_00003045.tif
 
 @cog_url_token={{cog_url}}?token={{api_token}}
 
