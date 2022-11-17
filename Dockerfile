@@ -10,4 +10,4 @@ ENV LIBTURBOJPEG=/usr/lib/libturbojpeg.so.0
 
 COPY ./src/cogtiler /app
 
-CMD ["python","-m","uvicorn","main:app","--host","0.0.0.0","--port","8000"]
+CMD ["python","-m","uvicorn","main:app","--host","0.0.0.0","--port","8000","--timeout-keep-alive","65"]
