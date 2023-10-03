@@ -182,3 +182,30 @@ connection: close
   "overviews": 4
 }
 ```
+
+
+# Example requests
+
+```
+/info?url=https://cdn.dataforsyningen.dk/skraafoto_server/COG_oblique_2021/10km_619_71/1km_6195_719/2021_84_40_5_0041_00091105.tif
+```
+
+```
+/thumbnail.jpg?url=https://cdn.dataforsyningen.dk/skraafoto_server/COG_oblique_2021/10km_619_71/1km_6195_719/2021_84_40_5_0041_00091105.tif
+```
+
+```
+/tiles/0/0/0.jpg?overflow=crop&url=https://cdn.dataforsyningen.dk/skraafoto_server/COG_oblique_2021/10km_619_71/1km_6195_719/2021_84_40_5_0041_00091105.tif
+```
+
+```
+/deepzoom.dzi?url=https%3A%2F%2Fcdn.dataforsyningen.dk%2Fskraafoto_server%2FCOG_oblique_2021%2F10km_622_57%2F1km_6228_577%2F2021_82_24_2_0025_00001379_10cm.tif
+```
+
+```
+/deepzoom_files/12/1_2.jpg?url=https%3A%2F%2Fcdn.dataforsyningen.dk%2Fskraafoto_server%2FCOG_oblique_2021%2F10km_622_57%2F1km_6228_577%2F2021_82_24_2_0025_00001379_10cm.tif
+```
+
+```
+/viewer.html?url=https://cdn.dataforsyningen.dk/skraafoto_server/COG_oblique_2021/10km_619_71/1km_6195_719/2021_84_40_5_0041_00091105.tif
+```
