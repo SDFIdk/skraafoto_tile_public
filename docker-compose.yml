@@ -6,7 +6,14 @@ services:
       context: .
       dockerfile: Dockerfile_dev
       target: production
-
     ports:
       - 8000:8000
-    command: python -m uvicorn main:app --host 0.0.0.0  --port 8000
+      - 5678:5678
+    volumes:
+      - ./src/cogtiler:/app
+    command: 
+      - /bin/sh
+      - -c
+      - |
+        pip install debugpy
+        python -m debugpy --wait-for-client --listen 0.0.0.0:5678 -m uvicorn main:app --host 0.0.0.0  --port 8000
