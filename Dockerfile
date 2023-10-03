@@ -1,12 +1,13 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8-alpine3.10 AS production
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.11-slim AS production
 
-RUN apk add --no-cache --virtual .build-deps gcc g++ libc-dev make\
-    && apk add --no-cache libjpeg-turbo \
-    && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir aiohttp==3.8.4 aiofiles==23.1.0 async-cache==1.1.1 PyTurboJPEG==1.7.0 loguru==0.6.0 \
-    && apk del .build-deps gcc g++ libc-dev make
+RUN apt update \
+    && apt upgrade -y \
+    && apt install libturbojpeg0 -y
 
-ENV LIBTURBOJPEG=/usr/lib/libturbojpeg.so.0
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+ENV LIBTURBOJPEG=/usr/lib/x86_64-linux-gnu/libturbojpeg.so.0
 
 COPY ./src/cogtiler /app
 
